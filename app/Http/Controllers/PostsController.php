@@ -3,16 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePostRequest;
+use App\Http\Resources\PostsResource;
 use App\Models\Posts;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class PostsController extends Controller
 {
     public function index() {
-        $posts = Posts::orderBy("created_at","desc")->paginate(10);
+        $posts = Posts::with('user')
+            ->orderBy("created_at", "desc")
+            ->paginate(10);
 
-        return inertia('Posts/Index', compact('posts'));
+        return inertia('Posts/Index', [
+            'posts' => PostsResource::collection($posts)
+        ]);
     }
 
     public function destroy($id) {
@@ -23,8 +29,9 @@ class PostsController extends Controller
     }
 
     public function edit($id) {
-        $post = Posts::find($id);
-        return inertia('Posts/Edit', compact('post'));
+        $post = Posts::with('user')->find($id);
+        $users = User::all();
+        return inertia('Posts/Edit', compact('post', 'users'));
     }
 
     public function update(StorePostRequest $request, $id)
